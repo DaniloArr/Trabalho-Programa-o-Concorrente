@@ -1,4 +1,4 @@
-# Trabalho-Programa-o-Concorrente
+# Trabalho-Programacao-Concorrente
 Especificação:
 
 Desenvolver uma aplicação multi-thread para processar uma matriz bidimensional contendo valores inteiros numa escala de 0 a 9. A ordem da matriz deve ser fornecida pelo usuário, podendo ser quadrada ou retangular. A matriz deverá ser gerada aleatoriamente e mostrada na tela. Pode-se determinar um tamanho máximo para a matriz na ordem de 1000x1000 elementos.
