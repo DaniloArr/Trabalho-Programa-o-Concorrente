@@ -13,6 +13,8 @@ int nLinhas, nColunas;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
+void *verificaColunaUnica(int linhaElem, int colunaElem);
+void *verificaLinhaUnica(int linhaElem, int colunaElem);
 void *mediaAritmetica(void *linhaMatriz);
 void *verificaVizinhos(int linhaElem, int colunaElem);
 int media(int vizAtras, int vizFrente, int vizCima, int vizBaixo, int vizEsqCima, int vizDirCima, int vizEsqBaixo, int vizDirBaixo, int quantidadeViz);
@@ -28,8 +30,9 @@ void geraMatriz(tipoMatriz m, int nLin, int nCol) {
         printf("| ");
         for (j = 0; j < nCol; j++) {
             m[i][j] = rand() % 10;
-            printf("%d | ", m[i][j]);
+            printf("%d ", m[i][j]);
         }
+        printf("|");
         printf("\n");
     }
 }
@@ -60,14 +63,14 @@ int main(void){
         pthread_join(thread[i], NULL);
     }
 
-    printf("\n\nMatriz Resultado:\n");
+    printf("\n\nMatriz Resultante:\n");
 
      for (i = 0; i < nLinhas; i++) {
         printf("| ");
         for (j = 0; j < nColunas; j++) {
-            printf("%d | ", matrizResultado[i][j]);
+            printf("%d ", matrizResultado[i][j]);
         }
-        printf("\n");
+        printf("|\n");
     }
     printf("\n");
 
@@ -83,15 +86,59 @@ void *mediaAritmetica(void *linhaMatriz){
     pthread_mutex_lock(&mutex);
 
     for (i = 0; i < nColunas; i++) {
-       //printf("\nLinha: %d - Coluna: %d -> %d\n", pacote->id, i, matrizPrincipal[pacote->linha][i]);
-       verificaVizinhos(pacote->linha, i);
+        if(nLinhas == 1 && nColunas == 1){
+             matrizResultado[pacote->linha][i] =  matrizPrincipal[pacote->linha][i];
+        }
+        else if(nLinhas == 1){
+            verificaLinhaUnica(pacote->linha, i);
+        }else if(nColunas == 1){
+            verificaColunaUnica(pacote->linha, i);
+        } else {
+            verificaVizinhos(pacote->linha, i);
+        }
     }
-    printf("\n-----\n");
 
     pthread_mutex_unlock(&mutex);
 
 }
 
+void *verificaLinhaUnica(int linhaElem, int colunaElem){
+    int vizAtras = 0;
+    int vizFrente = 0;
+
+    int resultadoMedia = 0;
+
+    if(colunaElem == 0){
+        matrizResultado[linhaElem][colunaElem] = matrizPrincipal[linhaElem][colunaElem + 1];
+    } else if(colunaElem == (nColunas - 1)){
+        matrizResultado[linhaElem][colunaElem] =  matrizResultado[linhaElem][colunaElem - 1];
+    } else {
+        vizAtras = matrizResultado[linhaElem][colunaElem - 1];
+        vizFrente = matrizPrincipal[linhaElem][colunaElem + 1];
+        resultadoMedia = media(vizAtras, vizFrente, 0, 0, 0, 0, 0, 0, 2);
+        matrizResultado[linhaElem][colunaElem] = resultadoMedia;
+    }
+
+}
+
+void *verificaColunaUnica(int linhaElem, int colunaElem){
+    int vizCima = 0;
+    int vizBaixo = 0;
+
+    int resultadoMedia = 0;
+
+    if(linhaElem == 0){
+        matrizResultado[linhaElem][colunaElem] = matrizPrincipal[linhaElem + 1][colunaElem];
+    } else if(linhaElem == (nLinhas - 1)){
+        matrizResultado[linhaElem][colunaElem] =  matrizResultado[linhaElem - 1][colunaElem];
+    } else {
+        vizCima = matrizResultado[linhaElem - 1][colunaElem];
+        vizBaixo = matrizPrincipal[linhaElem + 1][colunaElem];
+        resultadoMedia = media(0, 0, vizCima, vizBaixo, 0, 0, 0, 0, 2);
+        matrizResultado[linhaElem][colunaElem] = resultadoMedia;
+    }
+
+}
 
 void *verificaVizinhos(int linhaElem, int colunaElem){
     int vizAtras = 0;
@@ -106,8 +153,6 @@ void *verificaVizinhos(int linhaElem, int colunaElem){
     int resultadoMedia = 0;
 
     if (linhaElem == 0 && colunaElem == 0 ) {
-        //printf("\nPrimeiro Elemento posicao %d %d, ELEM: %d ", linhaElem, colunaElem, matrizPrincipal[linhaElem][colunaElem]);
-        //buscaVizinhos
         vizFrente = matrizPrincipal[linhaElem][colunaElem + 1];
         vizBaixo = matrizPrincipal[linhaElem + 1][colunaElem];
         vizDirBaixo = matrizPrincipal[linhaElem + 1][colunaElem + 1];
@@ -116,8 +161,6 @@ void *verificaVizinhos(int linhaElem, int colunaElem){
         matrizResultado[linhaElem][colunaElem] = resultadoMedia;
 
     } else if(linhaElem == (nLinhas - 1) && colunaElem == (nColunas - 1) ){
-       // printf("\nUltimo Elemento posicao %d %d, ELEM: %d", linhaElem, colunaElem, matrizPrincipal[linhaElem][colunaElem]);
-
         vizAtras = matrizResultado[linhaElem][colunaElem - 1];
         vizCima = matrizResultado[linhaElem - 1][colunaElem];
         vizEsqCima = matrizResultado[linhaElem - 1][colunaElem - 1];
@@ -126,8 +169,6 @@ void *verificaVizinhos(int linhaElem, int colunaElem){
         matrizResultado[linhaElem][colunaElem] = resultadoMedia;
 
     } else if(linhaElem == 0 && colunaElem == (nColunas - 1)) {
-        //elemento na primeira linha e na ultima coluna
-        //printf("\nElemento na primeira linha e na ultima coluna %d %d, ELEM: %d", linhaElem, colunaElem, matrizPrincipal[linhaElem][colunaElem]);
         vizAtras = matrizResultado[linhaElem][colunaElem - 1];
         vizBaixo = matrizPrincipal[linhaElem + 1][colunaElem];
         vizEsqBaixo = matrizPrincipal[linhaElem + 1][colunaElem - 1];
@@ -136,8 +177,6 @@ void *verificaVizinhos(int linhaElem, int colunaElem){
         matrizResultado[linhaElem][colunaElem] = resultadoMedia;
 
     } else if(linhaElem == (nLinhas -1 ) && colunaElem == 0) {
-        //elemento na ultima linha e na primeira coluna
-        //printf("\nElemento na ultima linha e na primeira coluna %d %d, ELEM: %d", linhaElem, colunaElem, matrizPrincipal[linhaElem][colunaElem]);
         vizFrente = matrizPrincipal[linhaElem][colunaElem + 1];
         vizCima = matrizResultado[linhaElem - 1][colunaElem];
         vizDirCima = matrizResultado[linhaElem - 1][colunaElem + 1];
@@ -146,8 +185,6 @@ void *verificaVizinhos(int linhaElem, int colunaElem){
         matrizResultado[linhaElem][colunaElem] = resultadoMedia;
 
     } else if (linhaElem == (nLinhas - 1) ) {
-        //printf("\nElemento na ultima linha %d %d, ELEM: %d", linhaElem, colunaElem, matrizPrincipal[linhaElem][colunaElem]);
-		//não calcula vizinhos abaixo
         vizAtras =  matrizResultado[linhaElem][colunaElem - 1];
         vizFrente =  matrizPrincipal[linhaElem][colunaElem + 1];
         vizCima =  matrizResultado[linhaElem - 1][colunaElem];
@@ -158,8 +195,6 @@ void *verificaVizinhos(int linhaElem, int colunaElem){
         matrizResultado[linhaElem][colunaElem] = resultadoMedia;
 
 	} else if(colunaElem == (nColunas - 1)){
-		//não calcula vizinhos a direita
-        //printf("\nElemento na ultima coluna %d %d, ELEM: %d", linhaElem, colunaElem, matrizPrincipal[linhaElem][colunaElem]);
         vizAtras =  matrizResultado[linhaElem][colunaElem - 1];
         vizCima =  matrizResultado[linhaElem - 1][colunaElem];
         vizBaixo =  matrizPrincipal[linhaElem + 1][colunaElem];
@@ -169,7 +204,6 @@ void *verificaVizinhos(int linhaElem, int colunaElem){
         resultadoMedia = media(vizAtras, 0, vizCima, vizBaixo, vizEsqCima, 0, vizEsqBaixo, 0, 5);
         matrizResultado[linhaElem][colunaElem] = resultadoMedia;
 	} else if(linhaElem == 0){
-        //printf("\nElemento na primeira linha %d %d, ELEM: %d", linhaElem, colunaElem, matrizPrincipal[linhaElem][colunaElem]);
         vizAtras =  matrizResultado[linhaElem][colunaElem - 1];
         vizFrente =  matrizPrincipal[linhaElem ][colunaElem + 1];
         vizBaixo =  matrizPrincipal[linhaElem + 1][colunaElem];
@@ -179,18 +213,15 @@ void *verificaVizinhos(int linhaElem, int colunaElem){
         resultadoMedia = media(vizAtras, vizFrente, 0, vizBaixo, 0, 0, vizEsqBaixo, vizDirBaixo, 5);
         matrizResultado[linhaElem][colunaElem] = resultadoMedia;
     } else if(colunaElem == 0){
-        //printf("\nElemento na primeira coluna %d %d, ELEM: %d", linhaElem, colunaElem, matrizPrincipal[linhaElem][colunaElem]);
         vizFrente =  matrizPrincipal[linhaElem ][colunaElem + 1];
         vizCima =  matrizResultado[linhaElem - 1][colunaElem];
         vizBaixo =  matrizPrincipal[linhaElem + 1][colunaElem];
         vizDirCima =  matrizResultado[linhaElem - 1][colunaElem + 1];
         vizDirBaixo =  matrizPrincipal[linhaElem + 1][colunaElem + 1];
 
-
         resultadoMedia = media(0, vizFrente, vizCima, vizBaixo, 0, vizDirCima, 0, vizDirBaixo, 5);
         matrizResultado[linhaElem][colunaElem] = resultadoMedia;
 	} else {
-        //printf("\nCentro,  %d %d, ELEM: %d", linhaElem, colunaElem, matrizPrincipal[linhaElem][colunaElem]); 
         vizAtras = matrizResultado[linhaElem ][colunaElem - 1];
         vizFrente =  matrizPrincipal[linhaElem ][colunaElem + 1];
         vizCima =  matrizResultado[linhaElem - 1][colunaElem];
