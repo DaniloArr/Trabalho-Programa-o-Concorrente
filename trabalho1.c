@@ -49,6 +49,11 @@ int main(void){
     printf("\nDetermine um numero de colunas para matriz => ");
     scanf("%d", &nColunas);
 
+    if (nLinhas > maxLin || (nColunas > maxCol)) {
+        printf("Erro: O numero de linhas ou colunas deve ser ate 1000. Programa encerrado.\n");
+        exit(EXIT_FAILURE); // Encerra o programa com falha
+    }
+
     printf("\nMatriz:\n");
     geraMatriz(matrizPrincipal, nLinhas, nColunas);
 
@@ -83,9 +88,11 @@ void *mediaAritmetica(void *linhaMatriz){
     pacote = (tipoValor *)linhaMatriz;
     int i, j;
 
-    pthread_mutex_lock(&mutex);
 
     for (i = 0; i < nColunas; i++) {
+        pthread_mutex_lock(&mutex);
+        //pacote->linha: referente a linha atual da thread
+        //i: referente a coluna atual que a thread está percorrendo
         if(nLinhas == 1 && nColunas == 1){
              matrizResultado[pacote->linha][i] =  matrizPrincipal[pacote->linha][i];
         }
@@ -96,9 +103,9 @@ void *mediaAritmetica(void *linhaMatriz){
         } else {
             verificaVizinhos(pacote->linha, i);
         }
+        pthread_mutex_unlock(&mutex);
     }
-
-    pthread_mutex_unlock(&mutex);
+    pthread_exit(NULL);
 
 }
 
