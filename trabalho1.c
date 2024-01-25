@@ -11,24 +11,49 @@ tipoMatriz matrizPrincipal, matrizResultado;
 
 int nLinhas, nColunas;
 
+int vetor;
+
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+typedef struct {
+    int linha, coluna, id;
+    int flagCalculado;
+} tipoValor;
+
+tipoValor *pack;
 
 void *verificaColunaUnica(int linhaElem, int colunaElem);
 void *verificaLinhaUnica(int linhaElem, int colunaElem);
 void *mediaAritmetica(void *linhaMatriz);
 void *verificaVizinhos(int linhaElem, int colunaElem);
+tipoValor *preencherThreads();
 int media(int vizAtras, int vizFrente, int vizCima, int vizBaixo, int vizEsqCima, int vizDirCima, int vizEsqBaixo, int vizDirBaixo, int quantidadeViz);
 
-typedef struct {
-    int linha, coluna, id;
-} tipoValor;
 
 void geraMatriz(tipoMatriz m, int nLin, int nCol) {
+
     int i, j;
+    int x = 1;
 
     for (i = 0; i < nLin; i++) {
         printf("| ");
         for (j = 0; j < nCol; j++) {
+//             int val = 0;
+//             if (j < 3) {
+//                 val = x;
+//                 x += 1;
+//             }
+//             if (i == 0 && j == 3) {
+//                 val = 1;
+//             }
+//             if (i == 1 && j == 3) {
+//                 val = 2;
+//             }
+//             if (i == 2 && j == 3) {
+//                 val = 3;
+//             }
+// 
+//             m[i][j] = val;
             m[i][j] = rand() % 10;
             printf("%d ", m[i][j]);
         }
@@ -37,14 +62,19 @@ void geraMatriz(tipoMatriz m, int nLin, int nCol) {
     }
 }
 
+tipoValor *preencherThreads(){
+    
+}
+
 int main(void){
-
-    pthread_t thread[maxLin];
+    srand(time(NULL));
     int i, j;
-    tipoValor *pack[maxLin];
-
+  
     printf("\nDetermine um numero de linhas para matriz => ");
     scanf("%d", &nLinhas);
+
+    pthread_t thread[nLinhas];
+    
 
     printf("\nDetermine um numero de colunas para matriz => ");
     scanf("%d", &nColunas);
@@ -57,16 +87,26 @@ int main(void){
     printf("\nMatriz:\n");
     geraMatriz(matrizPrincipal, nLinhas, nColunas);
 
-    for (i = 0; i < nLinhas; i++) {
-        pack[i] = malloc(sizeof(tipoValor));
-        pack[i]->linha = i;
-        pack[i]->id = i+ 1;
-        pthread_create(&(thread[i]), NULL, mediaAritmetica, (void *)pack[i]);
+    tipoValor *vetor =  malloc(nLinhas * sizeof(tipoValor));
+    for (int i = 0; i < nLinhas; i++) {
+        tipoValor linhaThread;
+        linhaThread.linha = i;
+        linhaThread.coluna = 0;
+        linhaThread.id = i;
+        vetor[i] = linhaThread;
     }
+
+    pack = vetor;
+    
+    for (i = 0; i < nLinhas; i++) {
+        pthread_create(&(thread[i]), NULL, mediaAritmetica, (void *)&pack[i]);
+    }
+    
 
     for (i = 0; i < nLinhas; i++) {
         pthread_join(thread[i], NULL);
     }
+
 
     printf("\n\nMatriz Resultante:\n");
 
@@ -88,11 +128,15 @@ void *mediaAritmetica(void *linhaMatriz){
     pacote = (tipoValor *)linhaMatriz;
     int i, j;
 
-
+    if(pacote->linha != 0){
+        while ((pack[pacote->linha - 1].coluna  <= (nColunas - 1))  && ((pack[pacote->linha - 1].coluna - pacote->coluna) <= 2)){
+            printf("\nAguardando Thread %d, Thread Atual: %d ", pacote->linha - 1 ,pacote->id);
+        }
+    }
+        
     for (i = 0; i < nColunas; i++) {
-        pthread_mutex_lock(&mutex);
-        //pacote->linha: referente a linha atual da thread
-        //i: referente a coluna atual que a thread está percorrendo
+        printf("\nLinha Atual: %d Coluna Atual: %d Coluna da Thread anterior: %d",pacote->linha, i, pack[pacote->linha - 1].coluna);
+
         if(nLinhas == 1 && nColunas == 1){
              matrizResultado[pacote->linha][i] =  matrizPrincipal[pacote->linha][i];
         }
@@ -103,9 +147,10 @@ void *mediaAritmetica(void *linhaMatriz){
         } else {
             verificaVizinhos(pacote->linha, i);
         }
-        pthread_mutex_unlock(&mutex);
+        pacote->coluna += 1;
+
     }
-    pthread_exit(NULL);
+    
 
 }
 
