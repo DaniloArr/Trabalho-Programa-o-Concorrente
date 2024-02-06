@@ -26,7 +26,6 @@ void *verificaColunaUnica(int linhaElem, int colunaElem);
 void *verificaLinhaUnica(int linhaElem, int colunaElem);
 void *mediaAritmetica(void *linhaMatriz);
 void *verificaVizinhos(int linhaElem, int colunaElem);
-tipoValor *preencherThreads();
 int media(int vizAtras, int vizFrente, int vizCima, int vizBaixo, int vizEsqCima, int vizDirCima, int vizEsqBaixo, int vizDirBaixo, int quantidadeViz);
 
 
@@ -62,10 +61,6 @@ void geraMatriz(tipoMatriz m, int nLin, int nCol) {
     }
 }
 
-tipoValor *preencherThreads(){
-    
-}
-
 int main(void){
     srand(time(NULL));
     int i, j;
@@ -75,13 +70,12 @@ int main(void){
 
     pthread_t thread[nLinhas];
     
-
     printf("\nDetermine um numero de colunas para matriz => ");
     scanf("%d", &nColunas);
 
-    if (nLinhas > maxLin || (nColunas > maxCol)) {
-        printf("Erro: O numero de linhas ou colunas deve ser ate 1000. Programa encerrado.\n");
-        exit(EXIT_FAILURE); // Encerra o programa com falha
+    if (nLinhas > maxLin || nColunas > maxCol || nLinhas == 0 || nColunas == 0) {
+        printf("Erro: O numero de linhas ou colunas deve ser maior que 0  e ate 1000. Programa encerrado.\n");
+        exit(EXIT_FAILURE); // Encerra o programa
     }
 
     printf("\nMatriz:\n");
@@ -102,11 +96,9 @@ int main(void){
         pthread_create(&(thread[i]), NULL, mediaAritmetica, (void *)&pack[i]);
     }
     
-
     for (i = 0; i < nLinhas; i++) {
         pthread_join(thread[i], NULL);
     }
-
 
     printf("\n\nMatriz Resultante:\n");
 
